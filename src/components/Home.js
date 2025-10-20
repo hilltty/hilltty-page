@@ -411,6 +411,7 @@ const Typewriter = () => {
 function MainPage() {
   const [animationStage, setAnimationStage] = useState('initial');
   const [isFhd, setIsFhd] = useState(false);
+  const videoRef = React.useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -453,6 +454,14 @@ function MainPage() {
     return () => {
       document.body.removeEventListener('touchmove', preventDefault);
     };
+  }, []);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {
+        // autoplay blocked, ignore
+      });
+    }
   }, []);
 
   const backgroundVideoVariants = {
@@ -512,7 +521,14 @@ function MainPage() {
 
   return (
     <PageContainer>
-      <VideoBackground autoPlay loop muted>
+      <VideoBackground
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        webkit-playsinline="true"
+      >
         <source src={videoSrc} type="video/mp4" />
       </VideoBackground>
       <MotionBackgroundWrapper>
