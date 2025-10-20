@@ -7,7 +7,6 @@ import { RiGithubFill, RiLinkedinFill, RiTelegram2Fill, RiDiscordFill, RiSpotify
 import { BsYoutube } from 'react-icons/bs';
 import effectImage from '../images/effect.gif';
 import bgGif from '../images/axolotl.gif';
-import videoSrc from '../video/background.mp4';
 
 const words = ['hilltty', 'хиллтти', 'ヒルッティ', 'ひるってぃ'];
 
@@ -62,23 +61,165 @@ const PageContainer = styled.div`
   user-select: none;
 `;
 
-const VideoBackground = styled.video`
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: translate(-50%, -50%);
-  z-index: -1;
-  filter: blur(5px);
-
-  @media (max-width: 768px) {
-    width: auto;
-    height: auto;
-    transform: translate(-50%, -50%) scale(1);
+const spiralRotate = keyframes`
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 `;
+
+const SpiralBackgroundContainer = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: ${props => props.$background};
+  filter: blur(5px);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  contain: layout style paint;
+  content-visibility: auto;
+`;
+
+const SpiralTextWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const TextRing = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  animation: ${spiralRotate} ${props => props.$duration}s linear infinite;
+  animation-delay: ${props => props.$delay}s;
+  opacity: ${props => props.$opacity};
+  will-change: transform;
+  font-family: 'Consolas', monospace;
+  font-size: ${props => props.$fontSize}px;
+  font-weight: bold;
+  color: ${props => props.$textColor};
+  white-space: nowrap;
+`;
+
+const TextChar = styled.span`
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  transform: rotate(${props => props.$angle}deg) translate(${props => props.$radius}px) rotate(90deg);
+  display: inline-block;
+  contain: layout style;
+`;
+
+const SPIRAL_TEXT = "dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et Lorem ipsum ";
+
+const getTheme = () => {
+  const hour = new Date().getHours();
+  const isNight = hour >= 18 || hour < 6;
+
+  return {
+    background: isNight
+      ? 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)'
+      : 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+    textColor: isNight ? '#ffffff' : '#000000'
+  };
+};
+
+const RINGS_DATA = [
+  { size: 2400, opacity: 0.50, duration: 60, fontSize: 88 },
+  { size: 2200, opacity: 0.47, duration: 58.5, fontSize: 80 },
+  { size: 2000, opacity: 0.44, duration: 57, fontSize: 72 },
+  { size: 1800, opacity: 0.41, duration: 55.5, fontSize: 64 },
+  { size: 1600, opacity: 0.38, duration: 54, fontSize: 56 },
+  { size: 1400, opacity: 0.35, duration: 52.5, fontSize: 56 },
+  { size: 1200, opacity: 0.32, duration: 51, fontSize: 48 },
+  { size: 1000, opacity: 0.29, duration: 49.5, fontSize: 40 },
+  { size: 850, opacity: 0.26, duration: 48, fontSize: 34 },
+  { size: 700, opacity: 0.23, duration: 46.5, fontSize: 28 },
+  { size: 560, opacity: 0.20, duration: 45, fontSize: 22 },
+  { size: 440, opacity: 0.17, duration: 43.5, fontSize: 18 },
+  { size: 340, opacity: 0.14, duration: 42, fontSize: 14 },
+  { size: 250, opacity: 0.11, duration: 40.5, fontSize: 10 },
+  { size: 180, opacity: 0.08, duration: 39, fontSize: 8 },
+  { size: 120, opacity: 0.06, duration: 37.5, fontSize: 6 },
+  { size: 70, opacity: 0.04, duration: 36, fontSize: 5 },
+  { size: 35, opacity: 0.02, duration: 34.5, fontSize: 4 }
+];
+
+const MemoizedTextChar = React.memo(({ char, angle, radius }) => (
+  <TextChar $angle={angle} $radius={radius}>
+    {char}
+  </TextChar>
+));
+
+MemoizedTextChar.displayName = 'MemoizedTextChar';
+
+const MemoizedTextRing = React.memo(({ ring, chars, angleStep, textColor }) => {
+  const radius = ring.size / 2;
+
+  return (
+    <TextRing
+      $opacity={ring.opacity}
+      $duration={ring.duration}
+      $fontSize={ring.fontSize}
+      $delay={ring.delay}
+      $textColor={textColor}
+    >
+      {chars.map((char, charIndex) => (
+        <MemoizedTextChar
+          key={charIndex}
+          char={char}
+          angle={charIndex * angleStep}
+          radius={radius}
+        />
+      ))}
+    </TextRing>
+  );
+});
+
+MemoizedTextRing.displayName = 'MemoizedTextRing';
+
+const SpiralTextAnimation = () => {
+  const chars = React.useMemo(() => SPIRAL_TEXT.split(''), []);
+  const angleStep = React.useMemo(() => 360 / chars.length, [chars.length]);
+  const theme = React.useMemo(() => getTheme(), []);
+
+  const rings = React.useMemo(() =>
+    RINGS_DATA.map(ring => ({
+      ...ring,
+      delay: -(Math.random() * ring.duration)
+    })),
+    []
+  );
+
+  return (
+    <SpiralBackgroundContainer $background={theme.background}>
+      <SpiralTextWrapper>
+        {rings.map((ring, ringIndex) => (
+          <MemoizedTextRing
+            key={ringIndex}
+            ring={ring}
+            chars={chars}
+            angleStep={angleStep}
+            textColor={theme.textColor}
+          />
+        ))}
+      </SpiralTextWrapper>
+    </SpiralBackgroundContainer>
+  );
+};
 
 const MotionBackgroundWrapper = styled.div`
   position: absolute;
@@ -411,7 +552,6 @@ const Typewriter = () => {
 function MainPage() {
   const [animationStage, setAnimationStage] = useState('initial');
   const [isFhd, setIsFhd] = useState(false);
-  const videoRef = React.useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -454,14 +594,6 @@ function MainPage() {
     return () => {
       document.body.removeEventListener('touchmove', preventDefault);
     };
-  }, []);
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.play().catch(() => {
-        // autoplay blocked, ignore
-      });
-    }
   }, []);
 
   const backgroundVideoVariants = {
@@ -521,16 +653,7 @@ function MainPage() {
 
   return (
     <PageContainer>
-      <VideoBackground
-        ref={videoRef}
-        autoPlay
-        loop
-        muted
-        playsInline
-        webkit-playsinline="true"
-      >
-        <source src={videoSrc} type="video/mp4" />
-      </VideoBackground>
+      <SpiralTextAnimation />
       <MotionBackgroundWrapper>
         <MotionBackgroundImage
           src={bgGif}
