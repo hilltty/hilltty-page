@@ -293,7 +293,7 @@ const AxolotlContainer = styled.div`
     width: clamp(280px, calc(25 * var(--scale-unit)), 480px);
   }
 
-  @media (max-width: 768px) and (max-height: 650px) {
+  @media (max-width: 768px) and (max-height: 570px) {
     display: none;
   }
 `;
@@ -523,9 +523,17 @@ const IconContainer = styled.div`
     margin-top: clamp(2rem, 5vh, 3rem);
     margin-bottom: 0;
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: clamp(1rem, 4vw, 1.5rem);
     width: 90%;
+  }
+
+  @media (max-width: 360px) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(38px, 48px));
+    justify-content: center;
+    gap: clamp(0.8rem, 3vw, 1.2rem);
+    width: auto;
   }
 
   @media (min-width: 769px) {
