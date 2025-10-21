@@ -46,7 +46,7 @@ const scaleIn = keyframes`
 const smoothAnimation = keyframes`
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  100% { background-position: 0% 50%
 `;
 
 const PageContainer = styled.div`
@@ -85,6 +85,10 @@ const SpiralBackgroundContainer = styled.div`
   align-items: center;
   contain: layout style paint;
   content-visibility: auto;
+
+  @media (max-width: 768px) {
+    filter: blur(2.5px);
+  }
 `;
 
 const SpiralTextWrapper = styled.div`
@@ -113,12 +117,15 @@ const TextRing = styled.div`
   white-space: nowrap;
 `;
 
-const TextChar = styled.span`
+const TextChar = styled.span.attrs(props => ({
+  style: {
+    transform: `rotate(${props.$angle}deg) translate(${props.$radius}px) rotate(90deg)`
+  }
+}))`
   position: absolute;
   top: 0;
   left: 0;
   transform-origin: 0 0;
-  transform: rotate(${props => props.$angle}deg) translate(${props => props.$radius}px) rotate(90deg);
   display: inline-block;
   contain: layout style;
 `;
@@ -132,8 +139,8 @@ const getTheme = () => {
   return {
     background: isNight
       ? 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)'
-      : 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-    textColor: isNight ? '#ffffff' : '#000000'
+      : 'linear-gradient(135deg, #a8a4ce 0%, #c9a7d6 50%, #e6b8d7 100%)',
+    textColor: isNight ? '#ffffff' : '#2d1b3d'
   };
 };
 
@@ -285,7 +292,7 @@ const Header = styled.header`
   background-color: rgba(0, 0, 0, 0.2);
 
   @media (max-width: 768px) {
-    padding: 1.5rem 2rem;
+    padding: 0.75rem 2rem;
   }
 `;
 
@@ -328,6 +335,11 @@ const LogoWrapper = styled.div`
     background-size: 400% 400%;
     z-index: -1;
   }
+
+  @media (max-width: 768px) {
+    width: 42px;
+    height: 42px;
+  }
 `;
 
 const Logo = styled.img`
@@ -367,6 +379,7 @@ const TypewriterText = styled.span`
   font-weight: bold;
   font-size: 24px;
   letter-spacing: 1px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 `;
 
 const Cursor = styled.span`
@@ -391,6 +404,7 @@ const Title = styled.h1`
   opacity: 0;
   animation: ${fadeInUp} 0.25s ease 0.5s forwards;
   user-select: none;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 
   @media (max-width: 768px) {
     font-size: 2vh;
@@ -414,7 +428,7 @@ const DownloadText = styled.span`
 `;
 
 const Description = styled.p`
-  color: #ccc;
+  color: #e5e5e5;
   max-width: 600px;
   margin-bottom: 2rem;
   margin-top: 0;
@@ -423,6 +437,7 @@ const Description = styled.p`
   text-align: left;
   animation: ${fadeInUp} 0.25s ease 0.6s forwards;
   user-select: none;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
 
   @media (max-width: 768px) {
     max-width: 90%;
@@ -463,6 +478,7 @@ const IconWrapper = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: center;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
 
   svg {
     width: 75%;

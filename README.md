@@ -1,6 +1,6 @@
 # [hilltty.zip](https://hilltty.zip/)
 
-Personal portfolio website with animations.
+Personal home page.
 
 ## Deploy
 ```bash
