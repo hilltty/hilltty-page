@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
+import React, { useState, useEffect } from 'react';import styled, { keyframes, createGlobalStyle } from 'styled-components';
 import logo from '../images/logo.png';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
@@ -10,84 +9,104 @@ import bgGif from '../images/axolotl.gif';
 
 const words = ['hilltty', 'хиллтти', 'ヒルッティ', 'ひるってぃ'];
 
+const GlobalStyles = createGlobalStyle`
+  html {
+    touch-action: manipulation;
+  }
+
+  * {
+    touch-action: manipulation;
+  }
+
+  :root {
+    --bp-mobile: 768px;
+    --bp-tablet: 1024px;
+    --scale-unit: 1vw;
+    --space-xs: 0.5rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+    --space-xxl: 5rem;
+    --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+    --text-sm: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
+    --text-base: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);
+    --text-header: clamp(1.125rem, 1rem + 0.8vw, 1.5rem);
+    --text-lg: clamp(1.5rem, 1.2rem + 1.5vw, 2.5rem);
+    --text-xl: clamp(1.8rem, 1.4rem + 2vw, 3rem);
+    --icon-sm: 50px;
+    --icon-md: 60px;
+    --icon-lg: 75px;
+    --logo-sm: 42px;
+    --logo-md: 50px;
+    --logo-lg: 60px;
+  }
+`;
+
 const blink = keyframes`
-  0% { opacity: 1; }
+  0%, 100% { opacity: 1; }
   50% { opacity: 0; }
-  100% { opacity: 1; }
 `;
 
 const fadeInUp = keyframes`
-  0% {
+  from {
     opacity: 0;
     transform: translateY(-20px);
   }
-  100% {
+  to {
     opacity: 1;
     transform: translateY(0);
   }
 `;
 
 const fadeIn = keyframes`
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 `;
 
 const scaleIn = keyframes`
-  0% {
+  from {
     opacity: 0;
     transform: scale(0.8);
   }
-  100% {
+  to {
     opacity: 1;
     transform: scale(1);
   }
 `;
 
 const smoothAnimation = keyframes`
-  0% { background-position: 0% 50%; }
+  0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%
+`;
+
+const spiralRotate = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 `;
 
 const PageContainer = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   user-select: none;
 `;
 
-const spiralRotate = keyframes`
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-`;
-
 const SpiralBackgroundContainer = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: -1;
   background: ${props => props.$background};
-  filter: blur(5px);
+  filter: blur(3px);
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-  contain: layout style paint;
-  content-visibility: auto;
 
   @media (max-width: 768px) {
-    filter: blur(2.5px);
+    filter: blur(2px);
   }
 `;
 
@@ -127,7 +146,6 @@ const TextChar = styled.span.attrs(props => ({
   left: 0;
   transform-origin: 0 0;
   display: inline-block;
-  contain: layout style;
 `;
 
 const SPIRAL_TEXT = "dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et Lorem ipsum ";
@@ -228,77 +246,92 @@ const SpiralTextAnimation = () => {
   );
 };
 
-const MotionBackgroundWrapper = styled.div`
-  position: absolute;
-  top: 61%;
-  left: 100%;
-  width: 40%;
-  height: auto;
-  transform: translate(-50%, -50%);
+const ContentWrapper = styled.div`
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
   z-index: 1;
-  pointer-events: none;
 
   @media (max-width: 768px) {
-    top: 92%;
-    left: 80%;
-    width: 50%;
-    transform: translate(-50%, -50%);
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+const AxolotlContainer = styled.div`
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+
+  @media (max-width: 768px) {
+    bottom: 8vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: clamp(150px, 40vw, 220px);
+  }
+
+  @media (min-width: 769px) and (max-width: 1024px) {
+    top: 50%;
+    left: 100%;
+    transform: translate(5%, -50%);
+    width: clamp(200px, calc(25 * var(--scale-unit)), 480px);
+  }
+
+  @media (min-width: 1025px) and (max-width: 1366px) {
+    top: 50%;
+    left: 100%;
+    transform: translate(10%, -50%);
+    width: clamp(250px, calc(25 * var(--scale-unit)), 480px);
+  }
+
+  @media (min-width: 1367px) {
+    top: 50%;
+    left: 100%;
+    transform: translate(15%, -50%);
+    width: clamp(280px, calc(25 * var(--scale-unit)), 480px);
+  }
+
+  @media (max-width: 768px) and (max-height: 650px) {
+    display: none;
   }
 `;
 
 const MotionBackgroundImage = styled(motion.img)`
   width: 100%;
   height: auto;
-  object-fit: cover;
   will-change: transform, width, height, opacity;
-`;
-
-const Main = styled.main`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  text-align: left;
-  padding: 2rem;
-  margin-left: 5rem;
-  margin-top: -5rem;
-  z-index: 1;
-  opacity: 0;
-  animation: ${fadeIn} 0.25s ease 0.4s forwards;
-
-  @media (max-width: 768px) {
-    align-items: center;
-    text-align: center;
-    margin-left: 0;
-    margin-top: 0;
-    min-height: calc(100vh - 250px);
-    padding-top: 50px;
-  }
 `;
 
 const Header = styled.header`
   position: relative;
   display: flex;
+  flex: 0 0 auto;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 3rem 1.5rem 7rem;
-  margin-bottom: 1rem;
-  z-index: 2;
+  padding: var(--space-md) var(--space-xl) var(--space-md) var(--space-xxl);
+  margin-bottom: var(--space-sm);
+  z-index: 3;
   opacity: 0;
   transform: translateY(-20px);
   animation: ${fadeInUp} 0.25s ease 0.75s forwards;
   backdrop-filter: blur(10px);
   background-color: rgba(0, 0, 0, 0.2);
 
+  @media (max-width: 1024px) {
+    padding: var(--space-sm) var(--space-lg) var(--space-sm) var(--space-xl);
+  }
+
   @media (max-width: 768px) {
-    padding: 0.75rem 2rem;
+    padding: var(--space-sm) var(--space-md);
   }
 `;
 
 const LogoContainer = styled.div`
   display: flex;
   align-items: center;
+  gap: var(--space-md);
 `;
 
 const LogoWrapper = styled.div`
@@ -308,9 +341,8 @@ const LogoWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 60px;
-  height: 60px;
-  margin-right: 20px;
+  width: var(--logo-lg);
+  height: var(--logo-lg);
 
   &:hover img {
     transform: scale(1.1);
@@ -336,9 +368,14 @@ const LogoWrapper = styled.div`
     z-index: -1;
   }
 
+  @media (max-width: 1024px) {
+    width: var(--logo-md);
+    height: var(--logo-md);
+  }
+
   @media (max-width: 768px) {
-    width: 42px;
-    height: 42px;
+    width: var(--logo-sm);
+    height: var(--logo-sm);
   }
 `;
 
@@ -348,7 +385,7 @@ const Logo = styled.img`
   border-radius: 10px;
   object-fit: cover;
   transition: transform 0.1s ease-in-out;
-  z-index: 0;
+  cursor: pointer;
 `;
 
 const EffectOverlay = styled.img`
@@ -357,10 +394,9 @@ const EffectOverlay = styled.img`
   max-height: 150%;
   object-fit: contain;
   pointer-events: none;
-  margin-top: 0px;
+  margin-top: 0;
   margin-left: 5px;
   z-index: 1;
-  content: url(${effectImage});
 `;
 
 const TypewriterContainer = styled.div`
@@ -368,7 +404,7 @@ const TypewriterContainer = styled.div`
   display: inline-flex;
   align-items: center;
   position: relative;
-  height: 24px;
+  height: clamp(20px, 3vh, 28px);
   opacity: 0;
   animation: ${fadeInUp} 0.5s ease 0.8s forwards;
 `;
@@ -377,7 +413,7 @@ const TypewriterText = styled.span`
   color: white;
   font-family: 'Consolas', monospace;
   font-weight: bold;
-  font-size: 24px;
+  font-size: var(--text-header);
   letter-spacing: 1px;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 `;
@@ -388,17 +424,52 @@ const Cursor = styled.span`
   top: calc(50% + 2px);
   transform: translateY(-50%);
   width: 2px;
-  height: 24px;
+  height: clamp(20px, 3vh, 28px);
   background-color: white;
   opacity: ${props => props.$visible ? 1 : 0};
   animation: ${props => props.$blink ? blink : 'none'} 0.35s infinite;
   animation-delay: 0.8s;
 `;
 
+const MainContent = styled.main`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  animation: ${fadeIn} 0.25s ease 0.4s forwards;
+
+  @media (max-width: 768px) and (orientation: landscape) {
+    width: 100%;
+    padding: 1rem 0;
+    padding-top: 5vh;
+    padding-bottom: max(15vh, 150px);
+    justify-content: flex-start;
+    align-items: center;
+    text-align: center;
+  }
+
+  @media (max-width: 768px) and (orientation: portrait) {
+    width: 100%;
+    padding: 0;
+    padding-top: max(10vh, 60px);
+    padding-bottom: max(22vh, 220px);
+    justify-content: flex-start;
+    align-items: center;
+    text-align: center;
+  }
+
+  @media (min-width: 769px) {
+    justify-content: center;
+    align-items: flex-start;
+    padding-left: clamp(3rem, 8vw, 8rem);
+    max-width: 55%;
+  }
+`;
 
 const Title = styled.h1`
   color: white;
-  font-size: 2.5rem;
   margin-bottom: 1rem;
   margin-top: 0;
   opacity: 0;
@@ -407,70 +478,64 @@ const Title = styled.h1`
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 
   @media (max-width: 768px) {
-    font-size: 2vh;
-    margin-bottom: 1vh;
-    margin-top: 5vh;
+    font-size: clamp(1.8rem, 6vw, 2.2rem);
+    width: 90%;
   }
 
-  @media (min-width: 1921px) {
-    font-size: 3rem;
+  @media (min-width: 769px) {
+    font-size: clamp(1.8rem, calc(2.5 * var(--scale-unit)), 48px);
   }
 `;
 
 const DownloadText = styled.span`
   font-family: 'Consolas', monospace;
-  font-size: 2.7rem;
+  cursor: pointer;
   user-select: none;
-
-  @media (min-width: 1921px) {
-    font-size: 3.4rem;
-  }
+  display: inline-block;
 `;
 
 const Description = styled.p`
   color: #e5e5e5;
   max-width: 600px;
-  margin-bottom: 2rem;
+  margin-bottom: clamp(2rem, 3vh, 3rem);
   margin-top: 0;
-  font-size: 1rem;
   opacity: 0;
-  text-align: left;
   animation: ${fadeInUp} 0.25s ease 0.6s forwards;
   user-select: none;
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
 
   @media (max-width: 768px) {
-    max-width: 90%;
-    margin-bottom: 1rem;
-    margin-top: 1.5rem;
-    font-size: 0.9rem;
-    text-align: center;
+    font-size: clamp(1rem, 4vw, 1.3rem);
+    width: 85%;
+    max-width: 100%;
   }
 
-  @media (min-width: 1921px) {
-    font-size: 1.2rem;
-    max-width: 720px;
+  @media (min-width: 769px) {
+    font-size: clamp(0.85rem, calc(1.125 * var(--scale-unit)), 21.6px);
   }
 `;
 
 const IconContainer = styled.div`
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  margin-top: 20px;
-  width: 100%;
 
   @media (max-width: 768px) {
+    margin-top: clamp(2rem, 5vh, 3rem);
+    margin-bottom: 0;
     justify-content: center;
-    margin-top: -150px;
-    min-height: calc(100vh - 300px);
+    flex-wrap: wrap;
+    gap: clamp(1rem, 4vw, 1.5rem);
+    width: 90%;
+  }
+
+  @media (min-width: 769px) {
+    margin-top: 0;
+    justify-content: flex-start;
+    gap: clamp(12px, calc(1.25 * var(--scale-unit)), 24px);
   }
 `;
 
 const IconWrapper = styled(motion.div)`
-  width: ${props => props.$isFhd ? '50px' : '75px'};
-  height: ${props => props.$isFhd ? '50px' : '75px'};
-  margin: ${props => props.$isFhd ? '0 10px 0 0' : '0 30px 0 0'};
   opacity: 0.5;
   cursor: pointer;
   user-select: none;
@@ -483,6 +548,18 @@ const IconWrapper = styled(motion.div)`
   svg {
     width: 75%;
     height: 75%;
+  }
+
+  @media (max-width: 768px) {
+    width: clamp(38px, 10vw, 48px);
+    height: clamp(38px, 10vw, 48px);
+  }
+
+  @media (min-width: 769px) {
+    /* Синхронное масштабирование с ограничением на 1080p */
+    width: clamp(45px, calc(3.75 * var(--scale-unit)), 72px);
+    height: clamp(45px, calc(3.75 * var(--scale-unit)), 72px);
+    margin: 0;
   }
 `;
 
@@ -567,16 +644,6 @@ const Typewriter = () => {
 
 function MainPage() {
   const [animationStage, setAnimationStage] = useState('initial');
-  const [isFhd, setIsFhd] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsFhd(window.innerWidth <= 1920);
-    };
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     document.body.style.position = 'fixed';
@@ -607,42 +674,47 @@ function MainPage() {
   useEffect(() => {
     const preventDefault = (e) => e.preventDefault();
     document.body.addEventListener('touchmove', preventDefault, { passive: false });
+
+    const preventZoom = (e) => {
+      if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')) {
+        e.preventDefault();
+      }
+    };
+
+    const preventWheelZoom = (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('keydown', preventZoom);
+    document.addEventListener('wheel', preventWheelZoom, { passive: false });
+
     return () => {
       document.body.removeEventListener('touchmove', preventDefault);
+      document.removeEventListener('keydown', preventZoom);
+      document.removeEventListener('wheel', preventWheelZoom);
     };
   }, []);
+
+  const isMobile = window.innerWidth <= 768;
 
   const backgroundVideoVariants = {
     initial: {
       opacity: 0,
-      width: '20%',
-      height: '50%',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)'
+      scale: 0.5
     },
     middle: {
       opacity: 1,
-      width: '20%',
-      height: '50%',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
+      scale: 0.8,
       transition: {
         opacity: { duration: 4 },
-        width: { duration: 2 },
-        height: { duration: 2 },
-        top: { duration: 2 },
-        left: { duration: 2 }
+        scale: { duration: 2 }
       }
     },
     final: {
       opacity: 1,
-      width: '50%',
-      height: '100%',
-      top: '50%',
-      left: '70%',
-      transform: 'translate(-50%, -50%)',
+      scale: 1,
       transition: {
         duration: 1,
         ease: [1, 0.1, 0.1, 1]
@@ -668,92 +740,92 @@ function MainPage() {
   };
 
   return (
-    <PageContainer>
-      <SpiralTextAnimation />
-      <MotionBackgroundWrapper>
-        <MotionBackgroundImage
-          src={bgGif}
-          initial="initial"
-          animate={animationStage}
-          variants={backgroundVideoVariants}
-        />
-      </MotionBackgroundWrapper>
+    <>
+      <GlobalStyles />
+      <PageContainer>
+        <SpiralTextAnimation />
 
-      <Header>
-        <LogoContainer>
-          <LogoWrapper>
-            <Logo
-              src={logo}
-              alt="Ангелина 200м от вас. Купит интернет - провод, купит пиво."
-              onClick={handleMainPageClick}
-            />
-            <EffectOverlay src={effectImage} alt="Effect" />
-          </LogoWrapper>
-          <Typewriter />
-        </LogoContainer>
-      </Header>
+        <Header>
+          <LogoContainer>
+            <LogoWrapper>
+              <Logo
+                src={logo}
+                alt="hilltty logo"
+                onClick={handleMainPageClick}
+              />
+              <EffectOverlay src={effectImage} alt="Effect" />
+            </LogoWrapper>
+            <Typewriter />
+          </LogoContainer>
+        </Header>
 
-      <Main>
-        <Title>
-          <DownloadText onClick={handleConfetti}>
-            hobby developer
-          </DownloadText>
-        </Title>
-        <Description>
-          Когда ПП?
-        </Description>
-        <IconContainer>
-          <IconWrapper
-            $isFhd={isFhd}
-            variants={iconVariants}
-            whileHover="hover"
-            onClick={() => handleIconClick("https://github.com/hilltty")}
-          >
-            <RiGithubFill />
-          </IconWrapper>
-          <IconWrapper
-            $isFhd={isFhd}
-            variants={iconVariants}
-            whileHover="hover"
-            onClick={() => handleIconClick("https://www.linkedin.com/in/hilltty/")}
-          >
-            <RiLinkedinFill />
-          </IconWrapper>
-          <IconWrapper
-            $isFhd={isFhd}
-            variants={iconVariants}
-            whileHover="hover"
-            onClick={() => handleIconClick("https://t.me/hilltty")}
-          >
-            <RiTelegram2Fill />
-          </IconWrapper>
-          <IconWrapper
-            $isFhd={isFhd}
-            variants={iconVariants}
-            whileHover="hover"
-            onClick={() => handleIconClick("https://discordapp.com/users/412623325886677015")}
-          >
-            <RiDiscordFill />
-          </IconWrapper>
-          <IconWrapper
-            $isFhd={isFhd}
-            variants={iconVariants}
-            whileHover="hover"
-            onClick={() => handleIconClick("https://www.youtube.com/channel/UCi8RN4oFauC_MIj717ENtMQ")}
-          >
-            <BsYoutube />
-          </IconWrapper>
-          <IconWrapper
-            $isFhd={isFhd}
-            variants={iconVariants}
-            whileHover="hover"
-            onClick={() => handleIconClick("https://open.spotify.com/user/073gq6uta4c5zag5ftclcr7en?si=a1d0f6e0eb2349dd")}
-          >
-            <RiSpotifyFill />
-          </IconWrapper>
-        </IconContainer>
-      </Main>
-    </PageContainer>
+        <ContentWrapper>
+          <MainContent>
+            <Title>
+              <DownloadText onClick={handleConfetti}>
+                hobby developer
+              </DownloadText>
+            </Title>
+            <Description>
+              Когда ПП?
+            </Description>
+            <IconContainer>
+              <IconWrapper
+                variants={iconVariants}
+                whileHover="hover"
+                onClick={() => handleIconClick("https://github.com/hilltty")}
+              >
+                <RiGithubFill />
+              </IconWrapper>
+              <IconWrapper
+                variants={iconVariants}
+                whileHover="hover"
+                onClick={() => handleIconClick("https://www.linkedin.com/in/hilltty/")}
+              >
+                <RiLinkedinFill />
+              </IconWrapper>
+              <IconWrapper
+                variants={iconVariants}
+                whileHover="hover"
+                onClick={() => handleIconClick("https://t.me/hilltty")}
+              >
+                <RiTelegram2Fill />
+              </IconWrapper>
+              <IconWrapper
+                variants={iconVariants}
+                whileHover="hover"
+                onClick={() => handleIconClick("https://discordapp.com/users/412623325886677015")}
+              >
+                <RiDiscordFill />
+              </IconWrapper>
+              <IconWrapper
+                variants={iconVariants}
+                whileHover="hover"
+                onClick={() => handleIconClick("https://www.youtube.com/channel/UCi8RN4oFauC_MIj717ENtMQ")}
+              >
+                <BsYoutube />
+              </IconWrapper>
+              <IconWrapper
+                variants={iconVariants}
+                whileHover="hover"
+                onClick={() => handleIconClick("https://open.spotify.com/user/073gq6uta4c5zag5ftclcr7en?si=a1d0f6e0eb2349dd")}
+              >
+                <RiSpotifyFill />
+              </IconWrapper>
+            </IconContainer>
+
+            <AxolotlContainer>
+              <MotionBackgroundImage
+                src={bgGif}
+                initial="initial"
+                animate={animationStage}
+                variants={backgroundVideoVariants}
+              />
+            </AxolotlContainer>
+          </MainContent>
+        </ContentWrapper>
+      </PageContainer>
+    </>
   );
 }
 
