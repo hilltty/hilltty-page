@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';import styled, { keyframes, createGlobalStyle } from 'styled-components';
 import logo from '../images/logo.png';
-import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
 import { RiGithubFill, RiLinkedinFill, RiTelegram2Fill, RiDiscordFill, RiSpotifyFill } from 'react-icons/ri';
 import { BsYoutube } from 'react-icons/bs';
@@ -162,6 +161,8 @@ const getTheme = () => {
   };
 };
 
+const BASE_VIEWPORT = { width: 1920, height: 1080 };
+
 const RINGS_DATA = [
   { size: 2400, opacity: 0.50, duration: 60, fontSize: 88 },
   { size: 2200, opacity: 0.47, duration: 58.5, fontSize: 80 },
@@ -182,6 +183,23 @@ const RINGS_DATA = [
   { size: 70, opacity: 0.04, duration: 36, fontSize: 5 },
   { size: 35, opacity: 0.02, duration: 34.5, fontSize: 4 }
 ];
+
+const getVisibleRings = (viewportWidth, viewportHeight) => {
+  const baseDiagonal = Math.sqrt(BASE_VIEWPORT.width ** 2 + BASE_VIEWPORT.height ** 2);
+  const currentDiagonal = Math.sqrt(viewportWidth ** 2 + viewportHeight ** 2);
+  const scale = currentDiagonal / baseDiagonal;
+  const maxVisibleSize = currentDiagonal * 1.1;
+
+  if (scale >= 1) {
+    return RINGS_DATA.map(ring => ({
+      ...ring,
+      size: ring.size * scale,
+      fontSize: Math.round(ring.fontSize * scale)
+    }));
+  }
+
+  return RINGS_DATA.filter(ring => ring.size <= maxVisibleSize);
+};
 
 const MemoizedTextChar = React.memo(({ char, angle, radius }) => (
   <TextChar $angle={angle} $radius={radius}>
@@ -217,24 +235,51 @@ const MemoizedTextRing = React.memo(({ ring, chars, angleStep, textColor }) => {
 MemoizedTextRing.displayName = 'MemoizedTextRing';
 
 const SpiralTextAnimation = () => {
+  const [viewportSize, setViewportSize] = React.useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+
+  React.useEffect(() => {
+    let resizeTimeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        setViewportSize({
+          width: window.innerWidth,
+          height: window.innerHeight
+        });
+      }, 250);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
+    };
+  }, []);
+
   const chars = React.useMemo(() => SPIRAL_TEXT.split(''), []);
   const angleStep = React.useMemo(() => 360 / chars.length, [chars.length]);
   const theme = React.useMemo(() => getTheme(), []);
 
-  const rings = React.useMemo(() =>
-    RINGS_DATA.map(ring => ({
-      ...ring,
-      delay: -(Math.random() * ring.duration)
-    })),
-    []
-  );
+  const rings = React.useMemo(() => {
+    const visibleRings = getVisibleRings(viewportSize.width, viewportSize.height);
+    return visibleRings.map(ring => {
+      const originalIndex = RINGS_DATA.findIndex(r => r.duration === ring.duration);
+      return {
+        ...ring,
+        delay: -(originalIndex * 2.5)
+      };
+    });
+  }, [viewportSize.width, viewportSize.height]);
 
   return (
     <SpiralBackgroundContainer $background={theme.background}>
       <SpiralTextWrapper>
-        {rings.map((ring, ringIndex) => (
+        {rings.map(ring => (
           <MemoizedTextRing
-            key={ringIndex}
+            key={ring.duration}
             ring={ring}
             chars={chars}
             angleStep={angleStep}
@@ -301,7 +346,7 @@ const AxolotlContainer = styled.div`
 const MotionBackgroundImage = styled(motion.img)`
   width: 100%;
   height: auto;
-  will-change: transform, width, height, opacity;
+  will-change: transform;
 `;
 
 const Header = styled.header`
@@ -431,7 +476,9 @@ const Cursor = styled.span`
   animation-delay: 0.8s;
 `;
 
-const MainContent = styled.main`
+const MainContent = styled.main.attrs({
+  role: 'main'
+})`
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -553,6 +600,12 @@ const IconWrapper = styled(motion.div)`
   justify-content: center;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
 
+  &:focus {
+    outline: 2px solid white;
+    outline-offset: 2px;
+    opacity: 1;
+  }
+
   svg {
     width: 75%;
     height: 75%;
@@ -564,7 +617,6 @@ const IconWrapper = styled(motion.div)`
   }
 
   @media (min-width: 769px) {
-    /* Синхронное масштабирование с ограничением на 1080p */
     width: clamp(45px, calc(3.75 * var(--scale-unit)), 72px);
     height: clamp(45px, calc(3.75 * var(--scale-unit)), 72px);
     margin: 0;
@@ -652,6 +704,7 @@ const Typewriter = () => {
 
 function MainPage() {
   const [animationStage, setAnimationStage] = useState('initial');
+  const [showSpiral, setShowSpiral] = useState(false);
 
   useEffect(() => {
     document.body.style.position = 'fixed';
@@ -667,6 +720,17 @@ function MainPage() {
       document.body.style.right = '';
       document.body.style.bottom = '';
     };
+  }, []);
+
+  useEffect(() => {
+    const isMobile = window.innerWidth <= 768;
+    const delay = isMobile ? 800 : 0;
+
+    const spiralTimer = setTimeout(() => {
+      setShowSpiral(true);
+    }, delay);
+
+    return () => clearTimeout(spiralTimer);
   }, []);
 
   useEffect(() => {
@@ -730,8 +794,9 @@ function MainPage() {
     }
   };
 
-  const handleConfetti = () => {
+  const handleConfetti = async () => {
     const isMobile = window.innerWidth <= 768;
+    const confetti = (await import('canvas-confetti')).default;
     confetti({
       particleCount: 80,
       spread: 90,
@@ -743,6 +808,13 @@ function MainPage() {
     window.open(url, "_blank");
   };
 
+  const handleKeyPress = (event, callback) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      callback();
+    }
+  };
+
   const handleMainPageClick = () => {
     window.open("https://www.7-zip.org/", "_blank");
   };
@@ -751,7 +823,7 @@ function MainPage() {
     <>
       <GlobalStyles />
       <PageContainer>
-        <SpiralTextAnimation />
+        {showSpiral && <SpiralTextAnimation />}
 
         <Header>
           <LogoContainer>
@@ -760,8 +832,9 @@ function MainPage() {
                 src={logo}
                 alt="hilltty logo"
                 onClick={handleMainPageClick}
+                fetchpriority="high"
               />
-              <EffectOverlay src={effectImage} alt="Effect" />
+              <EffectOverlay src={effectImage} alt="Decorative effect overlay" loading="lazy" />
             </LogoWrapper>
             <Typewriter />
           </LogoContainer>
@@ -782,49 +855,75 @@ function MainPage() {
                 variants={iconVariants}
                 whileHover="hover"
                 onClick={() => handleIconClick("https://github.com/hilltty")}
+                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://github.com/hilltty"))}
+                role="button"
+                aria-label="Visit GitHub profile"
+                tabIndex={0}
               >
-                <RiGithubFill />
+                <RiGithubFill aria-hidden="true" />
               </IconWrapper>
               <IconWrapper
                 variants={iconVariants}
                 whileHover="hover"
                 onClick={() => handleIconClick("https://www.linkedin.com/in/hilltty/")}
+                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://www.linkedin.com/in/hilltty/"))}
+                role="button"
+                aria-label="Visit LinkedIn profile"
+                tabIndex={0}
               >
-                <RiLinkedinFill />
+                <RiLinkedinFill aria-hidden="true" />
               </IconWrapper>
               <IconWrapper
                 variants={iconVariants}
                 whileHover="hover"
                 onClick={() => handleIconClick("https://t.me/hilltty")}
+                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://t.me/hilltty"))}
+                role="button"
+                aria-label="Visit Telegram profile"
+                tabIndex={0}
               >
-                <RiTelegram2Fill />
+                <RiTelegram2Fill aria-hidden="true" />
               </IconWrapper>
               <IconWrapper
                 variants={iconVariants}
                 whileHover="hover"
                 onClick={() => handleIconClick("https://discordapp.com/users/412623325886677015")}
+                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://discordapp.com/users/412623325886677015"))}
+                role="button"
+                aria-label="Visit Discord profile"
+                tabIndex={0}
               >
-                <RiDiscordFill />
+                <RiDiscordFill aria-hidden="true" />
               </IconWrapper>
               <IconWrapper
                 variants={iconVariants}
                 whileHover="hover"
                 onClick={() => handleIconClick("https://www.youtube.com/channel/UCi8RN4oFauC_MIj717ENtMQ")}
+                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://www.youtube.com/channel/UCi8RN4oFauC_MIj717ENtMQ"))}
+                role="button"
+                aria-label="Visit YouTube channel"
+                tabIndex={0}
               >
-                <BsYoutube />
+                <BsYoutube aria-hidden="true" />
               </IconWrapper>
               <IconWrapper
                 variants={iconVariants}
                 whileHover="hover"
                 onClick={() => handleIconClick("https://open.spotify.com/user/073gq6uta4c5zag5ftclcr7en?si=a1d0f6e0eb2349dd")}
+                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://open.spotify.com/user/073gq6uta4c5zag5ftclcr7en?si=a1d0f6e0eb2349dd"))}
+                role="button"
+                aria-label="Visit Spotify profile"
+                tabIndex={0}
               >
-                <RiSpotifyFill />
+                <RiSpotifyFill aria-hidden="true" />
               </IconWrapper>
             </IconContainer>
 
             <AxolotlContainer>
               <MotionBackgroundImage
                 src={bgGif}
+                alt="Axolotl animation"
+                loading={isMobile ? "lazy" : "eager"}
                 initial="initial"
                 animate={animationStage}
                 variants={backgroundVideoVariants}
