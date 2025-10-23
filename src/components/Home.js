@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';import styled, { keyframes, createGlobalStyle } from 'styled-components';
-import logo from '../images/logo.png';
+import logo from '../images/logo.avif';
 import { motion } from 'framer-motion';
 import { RiGithubFill, RiLinkedinFill, RiTelegram2Fill, RiDiscordFill, RiSpotifyFill } from 'react-icons/ri';
 import { BsYoutube } from 'react-icons/bs';
-import effectImage from '../images/effect.gif';
-import bgGif from '../images/axolotl.gif';
+import effectImage from '../images/effect.avif';
+import bgGif from '../images/axolotl.avif';
 
 const words = ['hilltty', 'хиллтти', 'ヒルッティ', 'ひるってぃ'];
 
