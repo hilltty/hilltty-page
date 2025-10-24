@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';import styled, { keyframes, createGlobalStyle } from 'styled-components';
 import logo from '../images/logo.avif';
-import { motion } from 'framer-motion';
 import { RiGithubFill, RiLinkedinFill, RiTelegram2Fill, RiDiscordFill, RiSpotifyFill } from 'react-icons/ri';
 import { BsYoutube } from 'react-icons/bs';
 import effectImage from '../images/effect.avif';
@@ -343,10 +342,25 @@ const AxolotlContainer = styled.div`
   }
 `;
 
-const MotionBackgroundImage = styled(motion.img)`
+const backgroundFadeIn = keyframes`
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+
+const BackgroundImage = styled.img`
   width: 100%;
   height: auto;
-  will-change: transform;
+  animation: ${backgroundFadeIn} 5s cubic-bezier(1, 0.1, 0.1, 1) forwards;
 `;
 
 const Header = styled.header`
@@ -590,7 +604,7 @@ const IconContainer = styled.div`
   }
 `;
 
-const IconWrapper = styled(motion.div)`
+const IconWrapper = styled.div`
   opacity: 0.5;
   cursor: pointer;
   user-select: none;
@@ -599,6 +613,12 @@ const IconWrapper = styled(motion.div)`
   align-items: center;
   justify-content: center;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+  transition: transform 0.3s ease, opacity 0.3s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    opacity: 1;
+  }
 
   &:focus {
     outline: 2px solid white;
@@ -622,17 +642,6 @@ const IconWrapper = styled(motion.div)`
     margin: 0;
   }
 `;
-
-const iconVariants = {
-  hover: {
-    scale: 1.1,
-    opacity: 1,
-    transition: {
-      duration: 0.3,
-      ease: "easeInOut"
-    }
-  }
-};
 
 const Typewriter = () => {
   const [text, setText] = useState('');
@@ -703,7 +712,6 @@ const Typewriter = () => {
 };
 
 function MainPage() {
-  const [animationStage, setAnimationStage] = useState('initial');
   const [showSpiral, setShowSpiral] = useState(false);
 
   useEffect(() => {
@@ -733,15 +741,6 @@ function MainPage() {
     return () => clearTimeout(spiralTimer);
   }, []);
 
-  useEffect(() => {
-    setAnimationStage('middle');
-
-    const timer = setTimeout(() => {
-      setAnimationStage('final');
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     const preventDefault = (e) => e.preventDefault();
@@ -771,28 +770,6 @@ function MainPage() {
 
   const isMobile = window.innerWidth <= 768;
 
-  const backgroundVideoVariants = {
-    initial: {
-      opacity: 0,
-      scale: 0.5
-    },
-    middle: {
-      opacity: 1,
-      scale: 0.8,
-      transition: {
-        opacity: { duration: 4 },
-        scale: { duration: 2 }
-      }
-    },
-    final: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: 1,
-        ease: [1, 0.1, 0.1, 1]
-      }
-    }
-  };
 
   const handleConfetti = async () => {
     const isMobile = window.innerWidth <= 768;
@@ -852,8 +829,6 @@ function MainPage() {
             </Description>
             <IconContainer>
               <IconWrapper
-                variants={iconVariants}
-                whileHover="hover"
                 onClick={() => handleIconClick("https://github.com/hilltty")}
                 onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://github.com/hilltty"))}
                 role="button"
@@ -863,8 +838,6 @@ function MainPage() {
                 <RiGithubFill aria-hidden="true" />
               </IconWrapper>
               <IconWrapper
-                variants={iconVariants}
-                whileHover="hover"
                 onClick={() => handleIconClick("https://www.linkedin.com/in/hilltty/")}
                 onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://www.linkedin.com/in/hilltty/"))}
                 role="button"
@@ -874,8 +847,6 @@ function MainPage() {
                 <RiLinkedinFill aria-hidden="true" />
               </IconWrapper>
               <IconWrapper
-                variants={iconVariants}
-                whileHover="hover"
                 onClick={() => handleIconClick("https://t.me/hilltty")}
                 onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://t.me/hilltty"))}
                 role="button"
@@ -885,8 +856,6 @@ function MainPage() {
                 <RiTelegram2Fill aria-hidden="true" />
               </IconWrapper>
               <IconWrapper
-                variants={iconVariants}
-                whileHover="hover"
                 onClick={() => handleIconClick("https://discordapp.com/users/412623325886677015")}
                 onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://discordapp.com/users/412623325886677015"))}
                 role="button"
@@ -896,8 +865,6 @@ function MainPage() {
                 <RiDiscordFill aria-hidden="true" />
               </IconWrapper>
               <IconWrapper
-                variants={iconVariants}
-                whileHover="hover"
                 onClick={() => handleIconClick("https://www.youtube.com/channel/UCi8RN4oFauC_MIj717ENtMQ")}
                 onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://www.youtube.com/channel/UCi8RN4oFauC_MIj717ENtMQ"))}
                 role="button"
@@ -907,8 +874,6 @@ function MainPage() {
                 <BsYoutube aria-hidden="true" />
               </IconWrapper>
               <IconWrapper
-                variants={iconVariants}
-                whileHover="hover"
                 onClick={() => handleIconClick("https://open.spotify.com/user/073gq6uta4c5zag5ftclcr7en?si=a1d0f6e0eb2349dd")}
                 onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://open.spotify.com/user/073gq6uta4c5zag5ftclcr7en?si=a1d0f6e0eb2349dd"))}
                 role="button"
@@ -920,13 +885,10 @@ function MainPage() {
             </IconContainer>
 
             <AxolotlContainer>
-              <MotionBackgroundImage
+              <BackgroundImage
                 src={bgGif}
                 alt="Axolotl animation"
                 loading={isMobile ? "lazy" : "eager"}
-                initial="initial"
-                animate={animationStage}
-                variants={backgroundVideoVariants}
               />
             </AxolotlContainer>
           </MainContent>
