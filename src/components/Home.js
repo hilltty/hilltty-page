@@ -1,11 +1,30 @@
-import React, { useState, useEffect } from 'react';import styled, { keyframes, createGlobalStyle } from 'styled-components';
-import logo from '../images/logo.avif';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import styled, { keyframes, createGlobalStyle } from 'styled-components';
 import { RiGithubFill, RiLinkedinFill, RiTelegram2Fill, RiDiscordFill, RiSpotifyFill } from 'react-icons/ri';
 import { BsYoutube } from 'react-icons/bs';
-import effectImage from '../images/effect.avif';
-import bgGif from '../images/axolotl.avif';
+
+import logo from '../images/logo.avif';
+
+const isSafari = (() => {
+  const ua = navigator.userAgent;
+  return /^((?!chrome|android).)*safari/i.test(ua) || /iPad|iPhone|iPod/.test(ua);
+})();
+
+const imageFormat = isSafari ? 'webp' : 'avif';
+
+const effectImage = require(`../images/effect.${imageFormat}`);
+const bgGif = require(`../images/axolotl.${imageFormat}`);
 
 const words = ['hilltty', 'хиллтти', 'ヒルッティ', 'ひるってぃ'];
+
+const SOCIAL_LINKS = [
+  { url: 'https://github.com/hilltty', Icon: RiGithubFill, label: 'GitHub' },
+  { url: 'https://www.linkedin.com/in/hilltty/', Icon: RiLinkedinFill, label: 'LinkedIn' },
+  { url: 'https://t.me/hilltty', Icon: RiTelegram2Fill, label: 'Telegram' },
+  { url: 'https://discordapp.com/users/412623325886677015', Icon: RiDiscordFill, label: 'Discord' },
+  { url: 'https://www.youtube.com/channel/UCi8RN4oFauC_MIj717ENtMQ', Icon: BsYoutube, label: 'YouTube' },
+  { url: 'https://open.spotify.com/user/073gq6uta4c5zag5ftclcr7en?si=a1d0f6e0eb2349dd', Icon: RiSpotifyFill, label: 'Spotify' }
+];
 
 const GlobalStyles = createGlobalStyle`
   html {
@@ -17,24 +36,13 @@ const GlobalStyles = createGlobalStyle`
   }
 
   :root {
-    --bp-mobile: 768px;
-    --bp-tablet: 1024px;
     --scale-unit: 1vw;
-    --space-xs: 0.5rem;
     --space-sm: 1rem;
     --space-md: 1.5rem;
     --space-lg: 2rem;
     --space-xl: 3rem;
     --space-xxl: 5rem;
-    --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
-    --text-sm: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
-    --text-base: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);
     --text-header: clamp(1.125rem, 1rem + 0.8vw, 1.5rem);
-    --text-lg: clamp(1.5rem, 1.2rem + 1.5vw, 2.5rem);
-    --text-xl: clamp(1.8rem, 1.4rem + 2vw, 3rem);
-    --icon-sm: 50px;
-    --icon-md: 60px;
-    --icon-lg: 75px;
     --logo-sm: 42px;
     --logo-md: 50px;
     --logo-lg: 60px;
@@ -161,6 +169,7 @@ const getTheme = () => {
 };
 
 const BASE_VIEWPORT = { width: 1920, height: 1080 };
+const BASE_DIAGONAL = Math.sqrt(BASE_VIEWPORT.width ** 2 + BASE_VIEWPORT.height ** 2);
 
 const RINGS_DATA = [
   { size: 2400, opacity: 0.50, duration: 60, fontSize: 88 },
@@ -184,20 +193,23 @@ const RINGS_DATA = [
 ];
 
 const getVisibleRings = (viewportWidth, viewportHeight) => {
-  const baseDiagonal = Math.sqrt(BASE_VIEWPORT.width ** 2 + BASE_VIEWPORT.height ** 2);
   const currentDiagonal = Math.sqrt(viewportWidth ** 2 + viewportHeight ** 2);
-  const scale = currentDiagonal / baseDiagonal;
-  const maxVisibleSize = currentDiagonal * 1.1;
+  const scale = currentDiagonal / BASE_DIAGONAL;
 
   if (scale >= 1) {
-    return RINGS_DATA.map(ring => ({
+    return RINGS_DATA.map((ring, index) => ({
       ...ring,
       size: ring.size * scale,
-      fontSize: Math.round(ring.fontSize * scale)
+      fontSize: Math.round(ring.fontSize * scale),
+      delay: -(index * 2.5)
     }));
   }
 
-  return RINGS_DATA.filter(ring => ring.size <= maxVisibleSize);
+  const maxVisibleSize = currentDiagonal * 1.1;
+  return RINGS_DATA.map((ring, index) => ({
+    ...ring,
+    delay: -(index * 2.5)
+  })).filter(ring => ring.size <= maxVisibleSize);
 };
 
 const MemoizedTextChar = React.memo(({ char, angle, radius }) => (
@@ -233,7 +245,10 @@ const MemoizedTextRing = React.memo(({ ring, chars, angleStep, textColor }) => {
 
 MemoizedTextRing.displayName = 'MemoizedTextRing';
 
-const SpiralTextAnimation = () => {
+const chars = SPIRAL_TEXT.split('');
+const angleStep = 360 / chars.length;
+
+const SpiralTextAnimation = React.memo(() => {
   const [viewportSize, setViewportSize] = React.useState({
     width: window.innerWidth,
     height: window.innerHeight
@@ -258,20 +273,11 @@ const SpiralTextAnimation = () => {
     };
   }, []);
 
-  const chars = React.useMemo(() => SPIRAL_TEXT.split(''), []);
-  const angleStep = React.useMemo(() => 360 / chars.length, [chars.length]);
   const theme = React.useMemo(() => getTheme(), []);
-
-  const rings = React.useMemo(() => {
-    const visibleRings = getVisibleRings(viewportSize.width, viewportSize.height);
-    return visibleRings.map(ring => {
-      const originalIndex = RINGS_DATA.findIndex(r => r.duration === ring.duration);
-      return {
-        ...ring,
-        delay: -(originalIndex * 2.5)
-      };
-    });
-  }, [viewportSize.width, viewportSize.height]);
+  const rings = React.useMemo(
+    () => getVisibleRings(viewportSize.width, viewportSize.height),
+    [viewportSize.width, viewportSize.height]
+  );
 
   return (
     <SpiralBackgroundContainer $background={theme.background}>
@@ -288,7 +294,9 @@ const SpiralTextAnimation = () => {
       </SpiralTextWrapper>
     </SpiralBackgroundContainer>
   );
-};
+});
+
+SpiralTextAnimation.displayName = 'SpiralTextAnimation';
 
 const ContentWrapper = styled.div`
   flex: 1;
@@ -374,7 +382,7 @@ const Header = styled.header`
   z-index: 3;
   opacity: 0;
   transform: translateY(-20px);
-  animation: ${fadeInUp} 0.25s ease 0.75s forwards;
+  animation: ${fadeInUp} 0.2s ease 0.1s forwards;
   backdrop-filter: blur(10px);
   background-color: rgba(0, 0, 0, 0.2);
 
@@ -395,7 +403,7 @@ const LogoContainer = styled.div`
 
 const LogoWrapper = styled.div`
   opacity: 0;
-  animation: ${scaleIn} 0.25s ease 0.8s forwards;
+  animation: ${scaleIn} 0.2s ease 0.15s forwards;
   position: relative;
   display: flex;
   align-items: center;
@@ -403,14 +411,16 @@ const LogoWrapper = styled.div`
   width: var(--logo-lg);
   height: var(--logo-lg);
 
-  &:hover img {
-    transform: scale(1.1);
-  }
+  @media (hover: hover) {
+    &:hover img {
+      transform: scale(1.1);
+    }
 
-  &:hover::after {
-    opacity: 0.7;
-    animation: ${smoothAnimation} 6s infinite linear;
-    transform: scale(0.8);
+    &:hover::after {
+      opacity: 0.7;
+      animation: ${smoothAnimation} 6s infinite linear;
+      transform: scale(0.8);
+    }
   }
 
   &::after {
@@ -453,7 +463,6 @@ const EffectOverlay = styled.img`
   max-height: 150%;
   object-fit: contain;
   pointer-events: none;
-  margin-top: 0;
   margin-left: 5px;
   z-index: 1;
 `;
@@ -465,7 +474,7 @@ const TypewriterContainer = styled.div`
   position: relative;
   height: clamp(20px, 3vh, 28px);
   opacity: 0;
-  animation: ${fadeInUp} 0.5s ease 0.8s forwards;
+  animation: ${fadeInUp} 0.2s ease 0.15s forwards;
 `;
 
 const TypewriterText = styled.span`
@@ -487,19 +496,16 @@ const Cursor = styled.span`
   background-color: white;
   opacity: ${props => props.$visible ? 1 : 0};
   animation: ${props => props.$blink ? blink : 'none'} 0.35s infinite;
-  animation-delay: 0.8s;
 `;
 
-const MainContent = styled.main.attrs({
-  role: 'main'
-})`
+const MainContent = styled.main`
   flex: 1;
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 2;
   opacity: 0;
-  animation: ${fadeIn} 0.25s ease 0.4s forwards;
+  animation: ${fadeIn} 0.2s ease 0.05s forwards;
 
   @media (max-width: 768px) and (orientation: landscape) {
     width: 100%;
@@ -534,7 +540,7 @@ const Title = styled.h1`
   margin-bottom: 1rem;
   margin-top: 0;
   opacity: 0;
-  animation: ${fadeInUp} 0.25s ease 0.5s forwards;
+  animation: ${fadeInUp} 0.2s ease 0.2s forwards;
   user-select: none;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 
@@ -561,7 +567,7 @@ const Description = styled.p`
   margin-bottom: clamp(2rem, 3vh, 3rem);
   margin-top: 0;
   opacity: 0;
-  animation: ${fadeInUp} 0.25s ease 0.6s forwards;
+  animation: ${fadeInUp} 0.2s ease 0.25s forwards;
   user-select: none;
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
 
@@ -615,19 +621,22 @@ const IconWrapper = styled.div`
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
   transition: opacity 0.3s ease;
   position: relative;
+  outline: none;
 
-  &:hover svg {
-    transform: scale(1.1);
-  }
+  @media (hover: hover) {
+    &:hover svg {
+      transform: scale(1.1);
+    }
 
-  &:hover {
-    opacity: 1;
-  }
+    &:hover {
+      opacity: 1;
+    }
 
-  &:focus {
-    outline: 2px solid white;
-    outline-offset: 2px;
-    opacity: 1;
+    &:focus {
+      outline: 2px solid white;
+      outline-offset: 2px;
+      opacity: 1;
+    }
   }
 
   svg {
@@ -659,52 +668,37 @@ const Typewriter = () => {
   const [isStarted, setIsStarted] = useState(false);
 
   useEffect(() => {
-    const startDelay = setTimeout(() => {
-      setIsStarted(true);
-    }, 3600);
+    const startDelay = setTimeout(() => setIsStarted(true), 1200);
+    const cursorDelay = setTimeout(() => setCursorVisible(true), 800);
 
-    return () => clearTimeout(startDelay);
-  }, []);
-
-  useEffect(() => {
-    const cursorDelay = setTimeout(() => {
-      setCursorVisible(true);
-    }, 3200);
-
-    return () => clearTimeout(cursorDelay);
+    return () => {
+      clearTimeout(startDelay);
+      clearTimeout(cursorDelay);
+    };
   }, []);
 
   useEffect(() => {
     if (!isStarted) return;
 
     const currentWord = words[wordIndex];
-    const typeSpeed = () => Math.random() * (200 - 100) + 100;
-
     const timer = setTimeout(() => {
       const now = Date.now();
-
-      if (now - lastTypedTime > 1000) {
-        setCursorBlink(true);
-      } else {
-        setCursorBlink(false);
-        setCursorVisible(true);
-      }
+      setCursorBlink(now - lastTypedTime > 1000);
+      if (now - lastTypedTime <= 1000) setCursorVisible(true);
 
       if (!isDeleting && text.length < currentWord.length) {
-        setText(text + currentWord[text.length]);
+        setText(prev => prev + currentWord[prev.length]);
         setLastTypedTime(now);
       } else if (isDeleting && text.length > 0) {
-        setText(text.slice(0, -1));
+        setText(prev => prev.slice(0, -1));
         setLastTypedTime(now);
       } else if (text.length === currentWord.length) {
         setIsDeleting(true);
-        return;
       } else if (text.length === 0) {
         setIsDeleting(false);
-        setWordIndex((prevIndex) => (prevIndex + 1) % words.length);
-        return;
+        setWordIndex(prev => (prev + 1) % words.length);
       }
-    }, typeSpeed());
+    }, Math.random() * 100 + 100);
 
     return () => clearTimeout(timer);
   }, [text, isDeleting, wordIndex, lastTypedTime, isStarted]);
@@ -719,88 +713,77 @@ const Typewriter = () => {
 
 function MainPage() {
   const [showSpiral, setShowSpiral] = useState(false);
+  const isMobile = useMemo(() => window.innerWidth <= 768, []);
 
   useEffect(() => {
-    document.body.style.position = 'fixed';
-    document.body.style.top = '0';
-    document.body.style.left = '0';
-    document.body.style.right = '0';
-    document.body.style.bottom = '0';
+    Object.assign(document.body.style, {
+      position: 'fixed',
+      inset: '0'
+    });
 
     return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
-      document.body.style.bottom = '';
+      Object.assign(document.body.style, {
+        position: '',
+        inset: ''
+      });
     };
   }, []);
 
   useEffect(() => {
-    const isMobile = window.innerWidth <= 768;
-    const delay = isMobile ? 800 : 0;
-
     const spiralTimer = setTimeout(() => {
       setShowSpiral(true);
-    }, delay);
+    }, isMobile ? 200 : 0);
 
     return () => clearTimeout(spiralTimer);
-  }, []);
-
+  }, [isMobile]);
 
   useEffect(() => {
     const preventDefault = (e) => e.preventDefault();
-    document.body.addEventListener('touchmove', preventDefault, { passive: false });
-
-    const preventZoom = (e) => {
+    const preventKeyZoom = (e) => {
       if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')) {
         e.preventDefault();
       }
     };
-
     const preventWheelZoom = (e) => {
-      if (e.ctrlKey) {
-        e.preventDefault();
-      }
+      if (e.ctrlKey) e.preventDefault();
     };
 
-    document.addEventListener('keydown', preventZoom);
+    document.body.addEventListener('touchmove', preventDefault, { passive: false });
+    document.addEventListener('keydown', preventKeyZoom);
     document.addEventListener('wheel', preventWheelZoom, { passive: false });
 
     return () => {
       document.body.removeEventListener('touchmove', preventDefault);
-      document.removeEventListener('keydown', preventZoom);
+      document.removeEventListener('keydown', preventKeyZoom);
       document.removeEventListener('wheel', preventWheelZoom);
     };
   }, []);
 
-  const isMobile = window.innerWidth <= 768;
-
-
-  const handleConfetti = async () => {
-    const isMobile = window.innerWidth <= 768;
+  const handleConfetti = useCallback(async () => {
     const confetti = (await import('canvas-confetti')).default;
     confetti({
       particleCount: 80,
       spread: 90,
       origin: { y: 0.55, x: isMobile ? 0.5 : 0.73 }
     });
-  };
+  }, [isMobile]);
 
-  const handleIconClick = (url) => {
-    window.open(url, "_blank");
-  };
+  const handleIconClick = useCallback((url) => {
+    const newWindow = window.open(url, "_blank");
+    if (newWindow) newWindow.opener = null;
+  }, []);
 
-  const handleKeyPress = (event, callback) => {
+  const handleKeyPress = useCallback((event, callback) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       callback();
     }
-  };
+  }, []);
 
-  const handleMainPageClick = () => {
-    window.open("https://www.7-zip.org/", "_blank");
-  };
+  const handleMainPageClick = useCallback(() => {
+    const newWindow = window.open("https://www.7-zip.org/", "_blank");
+    if (newWindow) newWindow.opener = null;
+  }, []);
 
   return (
     <>
@@ -824,7 +807,7 @@ function MainPage() {
         </Header>
 
         <ContentWrapper>
-          <MainContent>
+          <MainContent role="main">
             <Title>
               <DownloadText onClick={handleConfetti}>
                 hobby developer
@@ -834,60 +817,18 @@ function MainPage() {
               Когда ПП?
             </Description>
             <IconContainer>
-              <IconWrapper
-                onClick={() => handleIconClick("https://github.com/hilltty")}
-                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://github.com/hilltty"))}
-                role="button"
-                aria-label="Visit GitHub profile"
-                tabIndex={0}
-              >
-                <RiGithubFill aria-hidden="true" />
-              </IconWrapper>
-              <IconWrapper
-                onClick={() => handleIconClick("https://www.linkedin.com/in/hilltty/")}
-                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://www.linkedin.com/in/hilltty/"))}
-                role="button"
-                aria-label="Visit LinkedIn profile"
-                tabIndex={0}
-              >
-                <RiLinkedinFill aria-hidden="true" />
-              </IconWrapper>
-              <IconWrapper
-                onClick={() => handleIconClick("https://t.me/hilltty")}
-                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://t.me/hilltty"))}
-                role="button"
-                aria-label="Visit Telegram profile"
-                tabIndex={0}
-              >
-                <RiTelegram2Fill aria-hidden="true" />
-              </IconWrapper>
-              <IconWrapper
-                onClick={() => handleIconClick("https://discordapp.com/users/412623325886677015")}
-                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://discordapp.com/users/412623325886677015"))}
-                role="button"
-                aria-label="Visit Discord profile"
-                tabIndex={0}
-              >
-                <RiDiscordFill aria-hidden="true" />
-              </IconWrapper>
-              <IconWrapper
-                onClick={() => handleIconClick("https://www.youtube.com/channel/UCi8RN4oFauC_MIj717ENtMQ")}
-                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://www.youtube.com/channel/UCi8RN4oFauC_MIj717ENtMQ"))}
-                role="button"
-                aria-label="Visit YouTube channel"
-                tabIndex={0}
-              >
-                <BsYoutube aria-hidden="true" />
-              </IconWrapper>
-              <IconWrapper
-                onClick={() => handleIconClick("https://open.spotify.com/user/073gq6uta4c5zag5ftclcr7en?si=a1d0f6e0eb2349dd")}
-                onKeyPress={(e) => handleKeyPress(e, () => handleIconClick("https://open.spotify.com/user/073gq6uta4c5zag5ftclcr7en?si=a1d0f6e0eb2349dd"))}
-                role="button"
-                aria-label="Visit Spotify profile"
-                tabIndex={0}
-              >
-                <RiSpotifyFill aria-hidden="true" />
-              </IconWrapper>
+              {SOCIAL_LINKS.map(({ url, Icon, label }) => (
+                <IconWrapper
+                  key={url}
+                  onClick={() => handleIconClick(url)}
+                  onKeyPress={(e) => handleKeyPress(e, () => handleIconClick(url))}
+                  role="button"
+                  aria-label={`Visit ${label} profile`}
+                  tabIndex={0}
+                >
+                  <Icon aria-hidden="true" />
+                </IconWrapper>
+              ))}
             </IconContainer>
 
             <AxolotlContainer>
