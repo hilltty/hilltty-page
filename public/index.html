@@ -8,6 +8,13 @@
     <meta name="description" content="hilltty's home page" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <style>
+      body{margin:0;font-family:system-ui,-apple-system,sans-serif;overflow:hidden}#root{min-height:100vh}
+    </style>
+    <script>
+      const hour=new Date().getHours();
+      document.body.style.background=(hour>=18||hour<6)?'#1a1a2e':'#c9a7d6';
+    </script>
     <title>hilltty.zip</title>
   </head>
   <body>
