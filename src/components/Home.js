@@ -613,10 +613,14 @@ const IconWrapper = styled.div`
   align-items: center;
   justify-content: center;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: opacity 0.3s ease;
+  position: relative;
+
+  &:hover svg {
+    transform: scale(1.1);
+  }
 
   &:hover {
-    transform: scale(1.1);
     opacity: 1;
   }
 
@@ -629,6 +633,8 @@ const IconWrapper = styled.div`
   svg {
     width: 75%;
     height: 75%;
+    transition: transform 0.3s ease;
+    will-change: transform;
   }
 
   @media (max-width: 768px) {
