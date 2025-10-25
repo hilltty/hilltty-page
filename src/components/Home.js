@@ -3,8 +3,6 @@ import styled, { keyframes, createGlobalStyle } from 'styled-components';
 import { RiGithubFill, RiLinkedinFill, RiTelegram2Fill, RiDiscordFill, RiSpotifyFill } from 'react-icons/ri';
 import { BsYoutube } from 'react-icons/bs';
 
-import logo from '../images/logo.avif';
-
 const isSafari = (() => {
   const ua = navigator.userAgent;
   return /^((?!chrome|android).)*safari/i.test(ua) || /iPad|iPhone|iPod/.test(ua);
@@ -12,6 +10,7 @@ const isSafari = (() => {
 
 const imageFormat = isSafari ? 'webp' : 'avif';
 
+const logo = require(`../images/logo.${imageFormat}`);
 const effectImage = require(`../images/effect.${imageFormat}`);
 const bgGif = require(`../images/axolotl.${imageFormat}`);
 
@@ -351,15 +350,11 @@ const AxolotlContainer = styled.div`
 `;
 
 const backgroundFadeIn = keyframes`
-  0% {
+  from {
     opacity: 0;
-    transform: scale(0.5);
+    transform: scale(0.9);
   }
-  40% {
-    opacity: 1;
-    transform: scale(0.8);
-  }
-  100% {
+  to {
     opacity: 1;
     transform: scale(1);
   }
@@ -368,7 +363,9 @@ const backgroundFadeIn = keyframes`
 const BackgroundImage = styled.img`
   width: 100%;
   height: auto;
-  animation: ${backgroundFadeIn} 5s cubic-bezier(1, 0.1, 0.1, 1) forwards;
+  animation: ${backgroundFadeIn} 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+  transform-origin: center;
 `;
 
 const Header = styled.header`
@@ -455,6 +452,16 @@ const Logo = styled.img`
   object-fit: cover;
   transition: transform 0.1s ease-in-out;
   cursor: pointer;
+  outline: none;
+
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
 `;
 
 const EffectOverlay = styled.img`
@@ -559,6 +566,16 @@ const DownloadText = styled.span`
   cursor: pointer;
   user-select: none;
   display: inline-block;
+  outline: none;
+
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
 `;
 
 const Description = styled.p`
@@ -621,7 +638,16 @@ const IconWrapper = styled.div`
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
   transition: opacity 0.3s ease;
   position: relative;
-  outline: none;
+
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+    opacity: 1;
+  }
 
   @media (hover: hover) {
     &:hover svg {
@@ -629,12 +655,6 @@ const IconWrapper = styled.div`
     }
 
     &:hover {
-      opacity: 1;
-    }
-
-    &:focus {
-      outline: 2px solid white;
-      outline-offset: 2px;
       opacity: 1;
     }
   }
@@ -836,6 +856,7 @@ function MainPage() {
                 src={bgGif}
                 alt="Axolotl animation"
                 loading={isMobile ? "lazy" : "eager"}
+                fetchpriority={isMobile ? "auto" : "high"}
               />
             </AxolotlContainer>
           </MainContent>
