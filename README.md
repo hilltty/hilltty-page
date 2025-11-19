@@ -9,3 +9,7 @@ npm run build
 ```
 
 Upload the contents of the `build/` folder to your nginx root directory.
+
+## License
+
+MIT
